@@ -1,0 +1,241 @@
+diff --git a/bittensor/_config/config_impl.py b/bittensor/_config/config_impl.py
+index fdfcb9d4..31960921 100644
+--- a/bittensor/_config/config_impl.py
++++ b/bittensor/_config/config_impl.py
+@@ -62,6 +62,7 @@ class Config ( Munch ):
+                 bittensor.defaults.dataset.num_batches = self.dataset.num_batches
+                 bittensor.defaults.dataset.num_workers = self.dataset.num_workers
+                 bittensor.defaults.dataset.dataset_name = self.dataset.dataset_name
++                bittensor.defaults.dataset.dataset_name_blacklist = self.dataset.dataset_name_blacklist
+                 bittensor.defaults.dataset.data_dir = self.dataset.data_dir
+                 bittensor.defaults.dataset.save_dataset = self.dataset.save_dataset
+                 bittensor.defaults.dataset.max_datasets = self.dataset.max_datasets
+diff --git a/bittensor/_dataset/__init__.py b/bittensor/_dataset/__init__.py
+index 53858344..53931fb0 100644
+--- a/bittensor/_dataset/__init__.py
++++ b/bittensor/_dataset/__init__.py
+@@ -44,6 +44,7 @@ class dataset:
+             batch_size: int = None,
+             num_workers: int = None,
+             dataset_name: list = [],
++            dataset_name_blacklist: list = [],
+             save_dataset: bool=None,
+             no_tokenizer: bool=None,
+             num_batches: int = None,
+@@ -62,6 +63,9 @@ class dataset:
+                 dataset_name (:obj:`list`, `optional`):
+                     Which datasets to use (ArXiv, BookCorpus2, Books3, DMMathematics, EnronEmails, EuroParl, 
+                     Gutenberg_PG, HackerNews, NIHExPorter, OpenSubtitles, PhilPapers, UbuntuIRC, YoutubeSubtitles)).
++                dataset_name_blacklist (:obj:`list`, `optional`):
++                    Which datasets not to use (ArXiv, BookCorpus2, Books3, DMMathematics, EnronEmails, EuroParl, 
++                    Gutenberg_PG, HackerNews, NIHExPorter, OpenSubtitles, PhilPapers, UbuntuIRC, YoutubeSubtitles)).
+                 save_dataset (:obj:`bool`, `optional`):
+                     Save the downloaded dataset or not.
+                 no_tokenizer (:obj:`bool`, `optional`):
+@@ -78,6 +82,7 @@ class dataset:
+         config.dataset.batch_size = batch_size if batch_size != None else config.dataset.batch_size
+         config.dataset.num_workers = num_workers if num_workers != None else config.dataset.num_workers
+         config.dataset.dataset_name = dataset_name if dataset_name != [] else config.dataset.dataset_name
++        config.dataset.dataset_name_blacklist = dataset_name_blacklist if dataset_name_blacklist != [] else config.dataset.dataset_name_blacklist
+         config.dataset.save_dataset = save_dataset if save_dataset != None else config.dataset.save_dataset
+         config.dataset.no_tokenizer = no_tokenizer if no_tokenizer != None else config.dataset.no_tokenizer
+         config.dataset.num_batches = num_batches if num_batches != None else config.dataset.num_batches
+@@ -89,6 +94,7 @@ class dataset:
+                 batch_size = config.dataset.batch_size,
+                 num_workers = config.dataset.num_workers,
+                 dataset_name = config.dataset.dataset_name,
++                dataset_name_blacklist = config.dataset.dataset_name_blacklist,
+                 data_dir = config.dataset.data_dir,
+                 save_dataset = config.dataset.save_dataset,
+                 max_datasets = config.dataset.max_datasets,
+@@ -101,6 +107,7 @@ class dataset:
+                 batch_size = config.dataset.batch_size,
+                 num_workers = config.dataset.num_workers,
+                 dataset_name = config.dataset.dataset_name,
++                dataset_name_blacklist = config.dataset.dataset_name_blacklist,
+                 data_dir = config.dataset.data_dir,
+                 save_dataset = config.dataset.save_dataset,
+                 max_datasets = config.dataset.max_datasets,
+@@ -132,6 +139,8 @@ class dataset:
+             parser.add_argument('--' + prefix_str + 'dataset.num_workers',  type=int, help='Number of workers for data loader.', default = bittensor.defaults.dataset.num_workers)
+             parser.add_argument('--' + prefix_str + 'dataset.dataset_name', type=str, required=False, nargs='*', action='store', help='Which datasets to use (ArXiv, BookCorpus2, Books3, DMMathematics, EnronEmails, EuroParl, Gutenberg_PG, HackerNews, NIHExPorter, OpenSubtitles, PhilPapers, UbuntuIRC, YoutubeSubtitles)).',
+                                                                     default = bittensor.defaults.dataset.dataset_name)
++            parser.add_argument('--' + prefix_str + 'dataset.dataset_name_blacklist', type=str, required=False, nargs='*', action='store', help='Which datasets not to use (ArXiv, BookCorpus2, Books3, DMMathematics, EnronEmails, EuroParl, Gutenberg_PG, HackerNews, NIHExPorter, OpenSubtitles, PhilPapers, UbuntuIRC, YoutubeSubtitles)).',
++                                                                    default = bittensor.defaults.dataset.dataset_name_blacklist)
+             parser.add_argument('--' + prefix_str + 'dataset.data_dir', type=str, help='Where to save and load the data.', default = bittensor.defaults.dataset.data_dir)
+             parser.add_argument('--' + prefix_str + 'dataset.save_dataset', action='store_true', help='Save the downloaded dataset or not.', default = bittensor.defaults.dataset.save_dataset)
+             parser.add_argument('--' + prefix_str + 'dataset.max_datasets',  type=int, help='Number of datasets to load', default = bittensor.defaults.dataset.max_datasets)
+@@ -161,6 +170,7 @@ class dataset:
+         defaults.dataset.block_size = os.getenv('BT_DATASET_BLOCK_SIZE') if os.getenv('BT_DATASET_BLOCK_SIZE') != None else 20
+         defaults.dataset.num_workers = os.getenv('BT_DATASET_NUM_WORKERS') if os.getenv('BT_DATASET_NUM_WORKERS') != None else 0
+         defaults.dataset.dataset_name = os.getenv('BT_DATASET_DATASET_NAME') if os.getenv('BT_DATASET_DATASET_NAME') != None else 'default'
++        defaults.dataset.dataset_name_blacklist = os.getenv('BT_DATASET_DATASET_NAME_BLACKLIST') if os.getenv('BT_DATASET_DATASET_NAME_BLACKLIST') != None else []
+         defaults.dataset.data_dir = os.getenv('BT_DATASET_DATADIR') if os.getenv('BT_DATASET_DATADIR') != None else '~/.bittensor/data/'
+         defaults.dataset.save_dataset = os.getenv('BT_DATASET_SAVE_DATASET') if os.getenv('BT_DATASET_SAVE_DATASET') != None else False
+         defaults.dataset.max_datasets = os.getenv('BT_DATASET_MAX_DATASETS') if os.getenv('BT_DATASET_MAX_DATASETS') != None else 3
+diff --git a/bittensor/_dataset/dataset_impl.py b/bittensor/_dataset/dataset_impl.py
+index 44996eaf..f05a2f19 100644
+--- a/bittensor/_dataset/dataset_impl.py
++++ b/bittensor/_dataset/dataset_impl.py
+@@ -128,6 +128,7 @@ class GenesisTextDataset( Dataset ):
+         batch_size,
+         num_workers,
+         dataset_name,
++        dataset_name_blacklist,
+         data_dir,
+         save_dataset,
+         max_datasets,
+@@ -140,6 +141,7 @@ class GenesisTextDataset( Dataset ):
+         self.num_workers = num_workers
+         self.tokenizer = bittensor.tokenizer( version = bittensor.__version__ )
+         self.dataset_name = dataset_name
++        self.dataset_name_blacklist = dataset_name_blacklist
+         self.data_dir = data_dir
+         self.save_dataset = save_dataset
+         self.datafile_size_bound = 262158
+@@ -343,7 +345,8 @@ class GenesisTextDataset( Dataset ):
+         
+         if self.dataset_name == 'default':
+             i = 0
+-            dataset_hashes = list(self.dataset_hashes.values())
++            unfiltered_dataset_hashes = list(self.dataset_hashes.values())
++            dataset_hashes = list(filter(lambda dataset_hash: dataset_hash['Name'] not in self.dataset_name_blacklist, unfiltered_dataset_hashes))
+             random.shuffle(dataset_hashes)
+             
+             for dataset_hash in dataset_hashes: 
+@@ -355,6 +358,9 @@ class GenesisTextDataset( Dataset ):
+                     
+         else:
+             for key in self.dataset_name:
++                if key in key in self.dataset_name_blacklist:
++                    logger.warning('Skipping blacklisted dataset:'.ljust(20) + " <red>{}</red>.".format(key))
++                    continue
+                 if key in self.dataset_hashes.keys():
+                     dataset_meta = {'Folder': 'mountain','Name': key, 'Hash': self.dataset_hashes[key]['Hash'] }  
+                     directories += get_hashes(dataset_meta)
+@@ -413,13 +419,13 @@ class GenesisTextDataset( Dataset ):
+ 
+         folders = os.listdir( os.path.expanduser (self.data_dir))
+         if self.dataset_name == 'default':
+-            folders_avail = folders
++            folders_avail = list(filter(lambda folder: folder not in self.dataset_name_blacklist, folders))
+             random.shuffle(folders_avail)
+             folders_avail = folders_avail[:self.max_datasets]
+         else:
+             folders_avail = []
+             for dataset_name in self.dataset_name:
+-                if dataset_name in folders:
++                if dataset_name in folders and dataset_name not in self.dataset_name_blacklist:
+                     folders_avail.append(dataset_name)
+             random.shuffle(folders_avail)
+ 
+@@ -660,7 +666,7 @@ class GenesisTextDataset( Dataset ):
+         while response == None:
+             self.IPFS_fails += 1
+             response = self.get_ipfs_directory(self.text_dir, mountain_meta)
+-            
++
+             if response:
+                 dataset_hashes = response.json()['Links']
+                 if self.save_dataset:
+diff --git a/bittensor/_dataset/dataset_mock.py b/bittensor/_dataset/dataset_mock.py
+index d2453750..aa2c71e9 100644
+--- a/bittensor/_dataset/dataset_mock.py
++++ b/bittensor/_dataset/dataset_mock.py
+@@ -34,6 +34,7 @@ class MockGenesisTextDataset( dataset_impl.Dataset ):
+         batch_size,
+         num_workers,
+         dataset_name,
++        dataset_name_blacklist,
+         data_dir,
+         save_dataset,
+         max_datasets,
+@@ -46,6 +47,7 @@ class MockGenesisTextDataset( dataset_impl.Dataset ):
+         self.num_workers = num_workers
+         self.tokenizer = bittensor.tokenizer( version = bittensor.__version__ )
+         self.dataset_name = dataset_name
++        self.dataset_name_blacklist = dataset_name_blacklist
+         self.data_dir = data_dir
+         self.save_dataset = save_dataset
+         self.datafile_size_bound = 262158
+diff --git a/sample_configs/advanced_server_sample_config.txt b/sample_configs/advanced_server_sample_config.txt
+index 40f64538..5d2ebab5 100644
+--- a/sample_configs/advanced_server_sample_config.txt
++++ b/sample_configs/advanced_server_sample_config.txt
+@@ -11,6 +11,7 @@ dataset.batch_size: 10
+ dataset.block_size: 20
+ dataset.data_dir: ~/.bittensor/data/
+ dataset.dataset_name: default
++dataset.dataset_name_blacklist: []
+ dataset.num_batches: 500
+ dataset.max_datasets: 3
+ dataset.no_tokenizer: false
+diff --git a/sample_configs/core_validator_sample_config.txt b/sample_configs/core_validator_sample_config.txt
+index 24ffc2be..3e1bc74f 100644
+--- a/sample_configs/core_validator_sample_config.txt
++++ b/sample_configs/core_validator_sample_config.txt
+@@ -2,6 +2,7 @@ dataset.batch_size: 10
+ dataset.block_size: 20
+ dataset.data_dir: ~/.bittensor/data/
+ dataset.dataset_name: default
++dataset.dataset_name_blacklist: []
+ dataset.num_batches: 500
+ dataset.max_datasets: 3
+ dataset.no_tokenizer: false
+diff --git a/sample_configs/template_miner_sample_config.txt b/sample_configs/template_miner_sample_config.txt
+index 935e6b4e..f57947a7 100644
+--- a/sample_configs/template_miner_sample_config.txt
++++ b/sample_configs/template_miner_sample_config.txt
+@@ -11,6 +11,7 @@ dataset.batch_size: 10
+ dataset.block_size: 20
+ dataset.data_dir: ~/.bittensor/data/
+ dataset.dataset_name: default
++dataset.dataset_name_blacklist: []
+ dataset.num_batches: 500
+ dataset.max_datasets: 3
+ dataset.no_tokenizer: false
+diff --git a/sample_configs/template_server_sample_config.txt b/sample_configs/template_server_sample_config.txt
+index 0f9f4ca5..ec0745b3 100644
+--- a/sample_configs/template_server_sample_config.txt
++++ b/sample_configs/template_server_sample_config.txt
+@@ -11,6 +11,7 @@ dataset.batch_size: 10
+ dataset.block_size: 20
+ dataset.data_dir: ~/.bittensor/data/
+ dataset.dataset_name: default
++dataset.dataset_name_blacklist: []
+ dataset.num_batches: 500
+ dataset.max_datasets: 3
+ dataset.no_tokenizer: false
+diff --git a/tests/integration_tests/constant.py b/tests/integration_tests/constant.py
+index e60e05a6..25366f03 100644
+--- a/tests/integration_tests/constant.py
++++ b/tests/integration_tests/constant.py
+@@ -2,7 +2,8 @@ from munch import Munch
+ 
+ dataset = Munch().fromDict(
+   {
+-    'dataset_name': ["Books3"],
++    'dataset_name': ["Gutenberg_PG"],
++    'dataset_name_blacklist': ["YoutubeSubtitles", "UbuntuIRC", "HackerNews"],
+     'num_batches': 10
+   }
+ )
+\ No newline at end of file
+diff --git a/tests/integration_tests/test_dataset.py b/tests/integration_tests/test_dataset.py
+index 223f1d98..1af6b5d8 100644
+--- a/tests/integration_tests/test_dataset.py
++++ b/tests/integration_tests/test_dataset.py
+@@ -38,6 +38,13 @@ def test_mock():
+     next(dataset)
+     next(dataset)
+     dataset.close()
++    
++def test_mock_blacklist_with():
++    dataset = bittensor.dataset(_mock=True, dataset_name = constant.dataset.dataset_name, dataset_name_blacklist = constant.dataset.dataset_name_blacklist)
++    next(dataset)
++    next(dataset)
++    next(dataset)
++    dataset.close()
+ 
+ def test_mock_function():
+     dataset = bittensor.dataset.mock()
